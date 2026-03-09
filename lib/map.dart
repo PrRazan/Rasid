@@ -1,7 +1,5 @@
-
-import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'main.dart';
+import 'package:flutter/material.dart';
 
 class Workshop {
   final String name;
@@ -10,6 +8,8 @@ class Workshop {
 
   Workshop({required this.name, required this.distance, required this.rating});
 }
+
+enum ServiceType { maintenance, inspection }
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -21,14 +21,63 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   Workshop? _selectedWorkshop;
   bool _isDropdownOpen = false;
+  ServiceType _selectedService = ServiceType.maintenance;
 
-  final List<Workshop> _workshops = [
+  final List<Workshop> _maintenanceCenters = [
     Workshop(name: 'مركز بترومين الرياض', distance: '3.2 كم', rating: '★★★★☆'),
-    Workshop(name: 'ورشة العضيب لصيانة السيارات', distance: '5.7 كم', rating: '★★★★★'),
-    Workshop(name: 'مركز صيانة الرمال الحديثة', distance: '1.5 كم', rating: '★★★☆☆'),
+    Workshop(
+      name: 'ورشة العضيب لصيانة السيارات',
+      distance: '5.7 كم',
+      rating: '★★★★★',
+    ),
+    Workshop(
+      name: 'مركز صيانة الرمال الحديثة',
+      distance: '1.5 كم',
+      rating: '★★★☆☆',
+    ),
     Workshop(name: 'المركز الفني بجدة', distance: '8.4 كم', rating: '★★★★☆'),
-    Workshop(name: 'مركز الناغي لصيانة الـ BMW', distance: '12.1 كم', rating: '★★★★★'),
+    Workshop(
+      name: 'مركز الناغي لصيانة الـ BMW',
+      distance: '12.1 كم',
+      rating: '★★★★★',
+    ),
   ];
+
+  final List<Workshop> _inspectionCenters = [
+    Workshop(
+      name: 'مركز الفحص الدوري - الرياض',
+      distance: '2.1 كم',
+      rating: '★★★★☆',
+    ),
+    Workshop(
+      name: 'الفحص الدوري - الرمال',
+      distance: '4.3 كم',
+      rating: '★★★★★',
+    ),
+    Workshop(
+      name: 'مركز الفحص الدوري - الشفا',
+      distance: '6.0 كم',
+      rating: '★★★☆☆',
+    ),
+    Workshop(
+      name: 'محطة الفحص الدوري - جدة',
+      distance: '9.5 كم',
+      rating: '★★★★☆',
+    ),
+  ];
+
+  List<Workshop> get _currentCenters =>
+      _selectedService == ServiceType.maintenance
+      ? _maintenanceCenters
+      : _inspectionCenters;
+
+  String get _dropdownHint => _selectedService == ServiceType.maintenance
+      ? 'اختر مركز صيانة'
+      : 'اختر مركز فحص دوري';
+
+  String get _headerTitle => _selectedService == ServiceType.maintenance
+      ? 'مراكز الصيانة المعتمدة'
+      : 'مراكز الفحص الدوري المعتمدة';
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +87,16 @@ class _MapScreenState extends State<MapScreen> {
         backgroundColor: const Color(0xFF1B1B1B),
         body: Stack(
           children: [
-            // Ambient Glows for glass effect depth
-            Positioned(top: 100, left: -50, child: _buildGlow(const Color(0xFF7FBED1), 200)),
-            Positioned(bottom: 100, right: -50, child: _buildGlow(const Color(0xFFBD4A55), 180)),
-            
+            Positioned(
+              top: 100,
+              left: -50,
+              child: _buildGlow(const Color(0xFF7FBED1), 200),
+            ),
+            Positioned(
+              bottom: 100,
+              right: -50,
+              child: _buildGlow(const Color(0xFFBD4A55), 180),
+            ),
             SafeArea(
               child: Column(
                 children: [
@@ -52,20 +107,13 @@ class _MapScreenState extends State<MapScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         children: [
-                          // Custom Glass Dropdown Box
-                          _buildGlassDropdown(),
-                          
-                          // Glass Dropdown List
-                          if (_isDropdownOpen) _buildGlassDropdownList(),
-                          
+                          _buildServiceSwitcher(),
                           const SizedBox(height: 16),
-                          
-                          // Glass Info Card
+                          _buildGlassDropdown(),
+                          if (_isDropdownOpen) _buildGlassDropdownList(),
+                          const SizedBox(height: 16),
                           _buildGlassInfoCard(),
-                          
                           const SizedBox(height: 24),
-                          
-                          // Glass Map View
                           _buildGlassMapView(),
                         ],
                       ),
@@ -95,20 +143,18 @@ class _MapScreenState extends State<MapScreen> {
               color: Colors.black.withOpacity(0.4),
               blurRadius: 20,
               offset: const Offset(0, 10),
-            )
+            ),
           ],
         ),
+
         child: Row(
           children: [
-            _buildCapsuleIconButton(
-              icon: Icons.arrow_back,
-              onTap: () => Navigator.pop(context),
-            ),
-            const Expanded(
+            const SizedBox(width: 48), // keeps the title centered
+            Expanded(
               child: Text(
-                "مراكز الصيانة",
+                _headerTitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -116,28 +162,98 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
             ),
-            // Empty space to balance the header since there's no filter
-            const SizedBox(width: 48),
+            const SizedBox(width: 48), // balance the layout
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCapsuleIconButton({IconData? icon, required VoidCallback onTap}) {
+  Widget _buildServiceSwitcher() {
     return Container(
-      width: 48,
-      height: 48,
-      margin: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.12), width: 1),
+        color: const Color(0xFF232323),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Center(
-          child: Icon(icon, color: Colors.white, size: 24),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSwitchItem(
+              title: 'الفحص الدوري',
+              isSelected: _selectedService == ServiceType.inspection,
+              onTap: () {
+                setState(() {
+                  _selectedService = ServiceType.inspection;
+                  _selectedWorkshop = null;
+                  _isDropdownOpen = false;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: _buildSwitchItem(
+              title: 'الصيانة',
+              isSelected: _selectedService == ServiceType.maintenance,
+              onTap: () {
+                setState(() {
+                  _selectedService = ServiceType.maintenance;
+                  _selectedWorkshop = null;
+                  _isDropdownOpen = false;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchItem({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF3A3A3A) : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected
+              ? Colors.white.withOpacity(0.14)
+              : Colors.transparent,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -162,16 +278,22 @@ class _MapScreenState extends State<MapScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _selectedWorkshop?.name ?? "اختر مركز صيانة",
+                  _selectedWorkshop?.name ?? _dropdownHint,
                   style: TextStyle(
-                    color: _selectedWorkshop != null ? Colors.white : Colors.white54,
+                    color: _selectedWorkshop != null
+                        ? Colors.white
+                        : Colors.white54,
                     fontSize: 14,
-                    fontWeight: _selectedWorkshop != null ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: _selectedWorkshop != null
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     fontFamily: 'Cairo',
                   ),
                 ),
                 Icon(
-                  _isDropdownOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isDropdownOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: Colors.white54,
                 ),
               ],
@@ -199,9 +321,9 @@ class _MapScreenState extends State<MapScreen> {
             child: ListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.zero,
-              itemCount: _workshops.length,
+              itemCount: _currentCenters.length,
               itemBuilder: (context, index) {
-                final ws = _workshops[index];
+                final ws = _currentCenters[index];
                 return InkWell(
                   onTap: () {
                     setState(() {
@@ -210,17 +332,24 @@ class _MapScreenState extends State<MapScreen> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 15,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: index != _workshops.length - 1 
-                          ? BorderSide(color: Colors.white.withOpacity(0.05)) 
-                          : BorderSide.none,
+                        bottom: index != _currentCenters.length - 1
+                            ? BorderSide(color: Colors.white.withOpacity(0.05))
+                            : BorderSide.none,
                       ),
                     ),
                     child: Text(
-                      ws.name, 
-                      style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'Cairo')
+                      ws.name,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontFamily: 'Cairo',
+                      ),
                     ),
                   ),
                 );
@@ -246,7 +375,12 @@ class _MapScreenState extends State<MapScreen> {
           ),
           child: Column(
             children: [
-              _infoRow("اسم المركز", _selectedWorkshop?.name ?? "-"),
+              _infoRow(
+                _selectedService == ServiceType.maintenance
+                    ? "اسم المركز"
+                    : "اسم محطة الفحص",
+                _selectedWorkshop?.name ?? "-",
+              ),
               const SizedBox(height: 12),
               Divider(color: Colors.white.withOpacity(0.05), height: 1),
               const SizedBox(height: 12),
@@ -254,7 +388,11 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 12),
               Divider(color: Colors.white.withOpacity(0.05), height: 1),
               const SizedBox(height: 12),
-              _infoRow("التقييم", _selectedWorkshop?.rating ?? "-", valueColor: Colors.amberAccent),
+              _infoRow(
+                "التقييم",
+                _selectedWorkshop?.rating ?? "-",
+                valueColor: Colors.amberAccent,
+              ),
             ],
           ),
         ),
@@ -277,22 +415,23 @@ class _MapScreenState extends State<MapScreen> {
           ),
           child: Stack(
             children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: MapPainter(),
-                ),
-              ),
+              Positioned.fill(child: CustomPaint(painter: MapPainter())),
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.location_on, 
-                      color: _selectedWorkshop != null ? const Color(0xFFBD4A55) : Colors.white38, 
+                      Icons.location_on,
+                      color: _selectedWorkshop != null
+                          ? const Color(0xFFBD4A55)
+                          : Colors.white38,
                       size: 48,
                       shadows: [
                         if (_selectedWorkshop != null)
-                          Shadow(color: const Color(0xFFBD4A55).withOpacity(0.5), blurRadius: 15)
+                          BoxShadow(
+                            color: const Color(0xFFBD4A55).withOpacity(0.5),
+                            blurRadius: 15,
+                          ).toShadow(),
                       ],
                     ),
                     Container(
@@ -315,19 +454,22 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _infoRow(String label, String value, {Color? valueColor}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text(
-          "$label : ", 
-          style: const TextStyle(color: Colors.white54, fontSize: 13, fontFamily: 'Cairo')
+          "$label : ",
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 13,
+            fontFamily: 'Cairo',
+          ),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
-            value, 
+            value,
             textAlign: TextAlign.right,
             style: TextStyle(
-              fontWeight: FontWeight.bold, 
+              fontWeight: FontWeight.bold,
               color: valueColor ?? Colors.white,
               fontSize: 14,
               fontFamily: 'Cairo',
@@ -350,7 +492,7 @@ class _MapScreenState extends State<MapScreen> {
             color: color.withOpacity(0.08),
             blurRadius: 60,
             spreadRadius: 20,
-          )
+          ),
         ],
       ),
     );
@@ -374,4 +516,10 @@ class MapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+extension on BoxShadow {
+  Shadow toShadow() {
+    return Shadow(color: color, blurRadius: blurRadius, offset: offset);
+  }
 }
