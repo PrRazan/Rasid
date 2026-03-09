@@ -9,7 +9,7 @@ class CarInfoScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "معلومات السيارة",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold), 
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
