@@ -92,10 +92,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           content: Text(content, style: TextStyle(color: _isDarkMode ? Colors.white70 : Colors.black87, fontFamily: 'Cairo', fontSize: 16 * _fontSizeMultiplier)),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_t('cancel'), style: TextStyle(color: Colors.grey, fontFamily: 'Cairo', fontSize: 14 * _fontSizeMultiplier)),
-            ),
-            TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 if (isDestructive) {
@@ -103,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
               child: Text(
-                isDestructive ? _t('confirm') : _t('close'),
+                _t('close'),
                 style: TextStyle(color: isDestructive ? Colors.redAccent : Colors.blueAccent, fontFamily: 'Cairo', fontSize: 14 * _fontSizeMultiplier),
               ),
             ),
@@ -144,7 +140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SafeArea(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
@@ -162,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             border: Border.all(color: borderColor),
                           ),
                           child: Icon(
-                            _language == 'العربية' ? Icons.arrow_forward_ios : Icons.arrow_back_ios_new,
+                            Icons.arrow_forward_ios,
                             color: textColor,
                             size: 20,
                           ),
@@ -216,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             icon: Icons.notifications_none,
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
                             trailing: Icon(
-                              _language == 'العربية' ? Icons.chevron_left : Icons.chevron_right,
+                              Icons.chevron_left,
                               color: textColor.withOpacity(0.5),
                             ),
                             textColor: textColor,
